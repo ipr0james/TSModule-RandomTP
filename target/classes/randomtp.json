@@ -1,0 +1,18 @@
+{
+  "version-control": {
+    "version": 1.2
+  },
+  "cooldown": 300,
+  "allow-water": false,
+  "world-permissions": false,
+  "worlds": {
+    "world": {
+      "min": 1000,
+      "max": 14000
+    }
+  },
+  "hooks": {
+    "factions": false,
+    "towny": false
+  }
+}
