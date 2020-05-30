@@ -31,17 +31,17 @@ import java.util.List;
 public final class RandomTP implements SpigotModule {
 
     @Override
-    public String name() {
+    public final String name() {
         return "RandomTP";
     }
 
     @Override
-    public void load() {
+    public final void load() {
         RTPHandler.INSTANCE.load();
     }
 
     @Override
-    public void messages(final MessageHandler handler) {
+    public final void messages(final MessageHandler handler) {
         handler.add("module.randomtp.not-enabled", "%prefix.error% RandomTP is not enabled for this world.");
         handler.add("module.randomtp.on-cooldown", "%prefix.info% You must wait &d%duration% &7before you can use this again.");
 
@@ -53,31 +53,31 @@ public final class RandomTP implements SpigotModule {
     }
 
     @Override
-    public void reload() {
+    public final void reload() {
         RTPHandler.INSTANCE.load();
     }
 
     @Override
-    public void shutdown() { }
+    public final void shutdown() { }
 
     @Override
-    public IDatabase database() {
+    public final IDatabase database() {
         return null;
     }
 
     @Override
-    public List<DatabaseTable> tables() {
+    public final List<DatabaseTable> tables() {
         return null;
     }
 
     @Override
-    public List<Listener> listeners() {
+    public final List<Listener> listeners() {
         return null;
     }
 
     @SuppressWarnings("rawtypes")
     @Override
-    public List<Command> commands() {
+    public final List<Command> commands() {
         return Collections.singletonList(new CommandRandomTP());
     }
 
