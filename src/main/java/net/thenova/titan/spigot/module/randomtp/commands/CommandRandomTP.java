@@ -3,11 +3,8 @@ package net.thenova.titan.spigot.module.randomtp.commands;
 import net.thenova.titan.library.command.data.CommandContext;
 import net.thenova.titan.library.command.data.CommandPermission;
 import net.thenova.titan.spigot.command.SpigotCommand;
-import net.thenova.titan.spigot.data.message.MessageHandler;
-import net.thenova.titan.spigot.data.message.placeholders.Placeholder;
 import net.thenova.titan.spigot.module.randomtp.handler.RTPHandler;
-import net.thenova.titan.spigot.users.user.User;
-import org.bukkit.World;
+import net.thenova.titan.spigot.users.SpigotUser;
 
 /**
  * Copyright 2019 ipr0james
@@ -24,28 +21,19 @@ import org.bukkit.World;
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-public final class CommandRTP extends SpigotCommand<User> implements CommandPermission<User> {
+public final class CommandRandomTP extends SpigotCommand<SpigotUser> implements CommandPermission<SpigotUser> {
 
-    public CommandRTP() {
-        super("wild","wilderness", "rtp");
+    public CommandRandomTP() {
+        super("randomtp","rtp", "wilderness", "wild");
     }
 
     @Override
-    public void execute(User user, CommandContext commandContext) {
-        final World world = user.getPlayer().getWorld();
-        if(RTPHandler.INSTANCE.getFile().get("world-permissions", Boolean.class)
-                && !user.hasPermission("randomtp.world." + world.getName().toLowerCase())) {
-            MessageHandler.INSTANCE.build("module.randomtp.no-permission-world")
-                    .placeholder(new Placeholder("world", user.getName()))
-                    .send(user);
-            return;
-        }
-
+    public final void execute(final SpigotUser user, final CommandContext commandContext) {
         RTPHandler.INSTANCE.handle(user.getPlayer());
     }
 
     @Override
-    public boolean hasPermission(User user) {
+    public final boolean hasPermission(final SpigotUser user) {
         return user.hasPermission("titan.command.randomtp");
     }
 }

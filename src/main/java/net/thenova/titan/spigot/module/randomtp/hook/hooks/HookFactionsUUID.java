@@ -24,7 +24,7 @@ import org.bukkit.entity.Player;
 public final class HookFactionsUUID implements RegionHook {
 
     @Override
-    public boolean check(Player player, Location location) {
+    public final boolean check(final Player player, final Location location) {
         return Board.getInstance().getFactionAt(new FLocation(location)).isWilderness();
     }
 }

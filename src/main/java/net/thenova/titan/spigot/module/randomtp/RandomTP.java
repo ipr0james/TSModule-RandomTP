@@ -1,16 +1,13 @@
 package net.thenova.titan.spigot.module.randomtp;
 
+import net.thenova.titan.core.message.MessageHandler;
+import net.thenova.titan.core.users.user.module.UserModule;
 import net.thenova.titan.library.command.data.Command;
 import net.thenova.titan.library.database.connection.IDatabase;
 import net.thenova.titan.library.database.sql.table.DatabaseTable;
-import net.thenova.titan.spigot.TitanSpigot;
-import net.thenova.titan.spigot.data.message.MessageHandler;
-import net.thenova.titan.spigot.module.randomtp.commands.CommandRTP;
+import net.thenova.titan.spigot.module.SpigotModule;
+import net.thenova.titan.spigot.module.randomtp.commands.CommandRandomTP;
 import net.thenova.titan.spigot.module.randomtp.handler.RTPHandler;
-import net.thenova.titan.spigot.module.randomtp.hook.HookHandler;
-import net.thenova.titan.spigot.plugin.IPlugin;
-import net.thenova.titan.spigot.users.user.module.UserModule;
-import org.bukkit.Bukkit;
 import org.bukkit.event.Listener;
 
 import java.util.Collections;
@@ -31,7 +28,7 @@ import java.util.List;
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-public final class RandomTP implements IPlugin {
+public final class RandomTP implements SpigotModule {
 
     @Override
     public String name() {
@@ -41,7 +38,6 @@ public final class RandomTP implements IPlugin {
     @Override
     public void load() {
         RTPHandler.INSTANCE.load();
-        Bukkit.getScheduler().runTask(TitanSpigot.INSTANCE.getPlugin(), HookHandler.INSTANCE::load);
     }
 
     @Override
@@ -58,13 +54,11 @@ public final class RandomTP implements IPlugin {
 
     @Override
     public void reload() {
-
+        RTPHandler.INSTANCE.load();
     }
 
     @Override
-    public void shutdown() {
-
-    }
+    public void shutdown() { }
 
     @Override
     public IDatabase database() {
@@ -84,7 +78,7 @@ public final class RandomTP implements IPlugin {
     @SuppressWarnings("rawtypes")
     @Override
     public List<Command> commands() {
-        return Collections.singletonList(new CommandRTP());
+        return Collections.singletonList(new CommandRandomTP());
     }
 
     @Override

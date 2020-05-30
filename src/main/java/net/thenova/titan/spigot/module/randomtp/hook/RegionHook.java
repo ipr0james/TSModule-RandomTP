@@ -20,5 +20,12 @@ import org.bukkit.entity.Player;
  */
 public interface RegionHook {
 
-    boolean check(Player player, Location location);
+    /**
+     * Check if the provided location is within a hooked plugin region and if this region then belongs to the player
+     *
+     * @param player - Player
+     * @param location - Location
+     * @return - Boolean
+     */
+    boolean check(final Player player, final Location location);
 }

@@ -1,17 +1,20 @@
 package net.thenova.titan.spigot.module.randomtp.handler;
 
 import de.arraying.kotys.JSON;
-import lombok.Getter;
+import net.thenova.titan.core.message.MessageHandler;
+import net.thenova.titan.core.message.placeholders.Placeholder;
+import net.thenova.titan.core.module.data.JSONFileModuleData;
 import net.thenova.titan.library.file.FileHandler;
 import net.thenova.titan.library.file.json.JSONFile;
 import net.thenova.titan.library.util.UNumber;
 import net.thenova.titan.library.util.URandom;
 import net.thenova.titan.library.util.cooldown.Cooldown;
-import net.thenova.titan.spigot.data.compatability.model.CompMaterial;
-import net.thenova.titan.spigot.data.message.MessageHandler;
-import net.thenova.titan.spigot.data.message.placeholders.Placeholder;
+import net.thenova.titan.spigot.TitanPluginSpigot;
+import net.thenova.titan.spigot.compatibility.compat.XMaterial;
+import net.thenova.titan.spigot.message.RecipientSpigot;
 import net.thenova.titan.spigot.module.randomtp.handler.data.RTPWorldData;
 import net.thenova.titan.spigot.module.randomtp.hook.HookHandler;
+import org.bukkit.Bukkit;
 import org.bukkit.Location;
 import org.bukkit.World;
 import org.bukkit.block.Block;
@@ -42,39 +45,57 @@ public enum RTPHandler {
     private static final String COOLDOWN_KEY = "random-tp";
 
     private final Map<String, RTPWorldData> worldData = new HashMap<>();
-    @Getter private JSONFile file;
+    private JSONFile file;
 
     private boolean allowWater;
     private int cooldown;
 
-    public void load() {
-        this.file = FileHandler.INSTANCE.loadJSONFile(RTPDataFile.class);
+    public final void load() {
+        this.file = FileHandler.INSTANCE.loadJSONFile(new JSONFileModuleData("randomtp"));
 
         this.cooldown = this.file.get("cooldown", Integer.class);
         this.allowWater = this.file.get("allow-water", Boolean.class);
 
         final JSON worlds = this.file.get("worlds", JSON.class);
         worlds.raw().keySet().forEach(key -> this.worldData.put(key, worlds.json(key).marshal(RTPWorldData.class)));
+
+        Bukkit.getScheduler().runTask(TitanPluginSpigot.getPlugin(), () -> HookHandler.INSTANCE.load(this.file.getJSON()));
     }
 
-    public void handle(Player player) {
-        RTPWorldData data = this.worldData.get(player.getWorld().getName());
-        
-        if(data == null) {
-            MessageHandler.INSTANCE.build("randomtp.not-enabled").send(player);
+    /**
+     * Handle the player executing the RTP command.
+     *
+     * @param player - Player
+     */
+    public final void handle(final Player player) {
+        final RecipientSpigot recipient = new RecipientSpigot(player);
+        final World world = player.getWorld();
+        if(this.file.get("world-permissions", Boolean.class)
+                && !(player.hasPermission("randomtp.world." + world.getName().toLowerCase())
+                    || player.hasPermission("randomtp.admin"))) {
+            MessageHandler.INSTANCE.build("module.randomtp.no-permission-world")
+                    .placeholder(new Placeholder("world", player.getName()))
+                    .send(recipient);
             return;
         }
+
+        final RTPWorldData data = this.worldData.get(player.getWorld().getName());
+        if(data == null) {
+            MessageHandler.INSTANCE.build("randomtp.not-enabled").send(recipient);
+            return;
+        }
+
 
         if(Cooldown.inCooldown(player.getUniqueId().toString(), COOLDOWN_KEY)
                 && !player.isOp()
                 && !player.hasPermission("randomtp.bypass")) {
             MessageHandler.INSTANCE.build("module.randomtp.on-cooldown")
                     .placeholder(new Placeholder("duration", UNumber.getTimeShort(Cooldown.get(player.getUniqueId().toString(), COOLDOWN_KEY))))
-                    .send(player);
+                    .send(recipient);
             return;
         }
 
-        MessageHandler.INSTANCE.build("module.randomtp.teleport.teleporting").send(player);
+        MessageHandler.INSTANCE.build("module.randomtp.teleport.teleporting").send(recipient);
 
         final int spawnX = player.getWorld().getSpawnLocation().getBlockX();
         final int spawnZ = player.getWorld().getSpawnLocation().getBlockZ();
@@ -87,15 +108,15 @@ public enum RTPHandler {
             x = URandom.r(spawnX + data.getMin(), spawnX + data.getMax());
             z = URandom.r(spawnZ + data.getMin(), spawnZ + data.getMax());
             if (URandom.nextBoolean()) {
-                x = 0 - x;
+                x = -x;
             }
                 
             if (URandom.nextBoolean()) {
-                z = 0 - z;
+                z = -z;
             }
 
             if (count == 100) {
-                MessageHandler.INSTANCE.build("module.randomtp.teleport.failed").send(player);
+                MessageHandler.INSTANCE.build("module.randomtp.teleport.failed").send(recipient);
                 return;
             }
         } while ((y = teleportCheck(player, x, z)) == -1);
@@ -106,10 +127,18 @@ public enum RTPHandler {
                 .placeholder(new Placeholder("x", x),
                         new Placeholder("y", y),
                         new Placeholder("z", z))
-                .send(player);
+                .send(recipient);
     }
 
-    private int teleportCheck(Player player, int x, int z) {
+    /**
+     * Check the given location is safe for the user to teleport to
+     *
+     * @param player - Player
+     * @param x - X coord
+     * @param z - Z coord
+     * @return - Y coord
+     */
+    private int teleportCheck(final Player player, final int x, final int z) {
         final World world = player.getWorld();
         final int y = this.getY(world, x, z);
 
@@ -118,20 +147,28 @@ public enum RTPHandler {
         }
 
         final Block highest = world.getBlockAt(x, y, z);
-        final CompMaterial material = CompMaterial.fromMaterial(highest.getType());
+        final XMaterial material = XMaterial.fromMaterial(highest.getType());
 
-        if((CompMaterial.fromMaterial(highest.getRelative(BlockFace.DOWN).getType()) == CompMaterial.WATER
-                && !this.allowWater) || HookHandler.INSTANCE.getHooks().stream()
+        if((XMaterial.fromMaterial(highest.getRelative(BlockFace.DOWN).getType()) == XMaterial.WATER && !this.allowWater)
+                || HookHandler.INSTANCE.getHooks().stream()
                     .anyMatch(hook -> !hook.check(player, new Location(player.getWorld(), x, y, z)))) {
             return -1;
         }
 
-        return (material == CompMaterial.AIR)
-                || (material == CompMaterial.WATER && this.allowWater)
-                || (material == CompMaterial.COBWEB) ? y : -1;
+        return (material == XMaterial.AIR)
+                || (material == XMaterial.WATER && this.allowWater)
+                || (material == XMaterial.COBWEB) ? y : -1;
     }
 
-    private int getY(World world, int x, int z) {
+    /**
+     * Get valid Y coord between worlds
+     *
+     * @param world - World
+     * @param x - X coord
+     * @param z - Z coord
+     * @return - Integer
+     */
+    private int getY(final World world, final int x, final int z) {
         if(world.getEnvironment() == World.Environment.NETHER) {
             for (int i = 124; i > 2; i--) {
                 if ((world.getBlockAt(x, i, z).isEmpty()) &&

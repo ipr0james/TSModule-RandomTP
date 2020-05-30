@@ -3,11 +3,10 @@ package net.thenova.titan.spigot.module.randomtp.hook;
 import de.arraying.kotys.JSON;
 import lombok.Getter;
 import net.thenova.titan.library.Titan;
-import net.thenova.titan.spigot.TitanSpigot;
-import net.thenova.titan.spigot.module.randomtp.handler.RTPHandler;
 import net.thenova.titan.spigot.module.randomtp.hook.hooks.HookFactions;
 import net.thenova.titan.spigot.module.randomtp.hook.hooks.HookFactionsUUID;
 import net.thenova.titan.spigot.module.randomtp.hook.hooks.HookTowny;
+import org.bukkit.Bukkit;
 import org.bukkit.plugin.PluginManager;
 
 import java.util.Arrays;
@@ -34,11 +33,16 @@ public enum HookHandler {
 
     @Getter private final Set<RegionHook> hooks = new HashSet<>();
 
-    public void load() {
-        final JSON hooksJSON = RTPHandler.INSTANCE.getFile().getJSON().json("hooks");
-        final PluginManager manager = TitanSpigot.INSTANCE.getPlugin().getServer().getPluginManager();
+    /**
+     * Initial load method for the HooksHandler
+     *
+     * @param json - JSON
+     */
+    public void load(final JSON json) {
+        final JSON hooksJson = json.json("hooks");
+        final PluginManager manager = Bukkit.getServer().getPluginManager();
 
-        if(hooksJSON.bool("towny")) {
+        if(hooksJson.bool("towny")) {
             if(manager.isPluginEnabled("Towny")) {
                 this.loadHook(new HookTowny());
             } else {
@@ -46,8 +50,9 @@ public enum HookHandler {
             }
         }
 
-        if(hooksJSON.bool("factions")) {
+        if(hooksJson.bool("factions")) {
             if(manager.isPluginEnabled("Factions")) {
+                //noinspection ConstantConditions
                 if(manager.getPlugin("Factions").getDescription().getAuthors().contains("drtshock")) {
                     this.loadHook(new HookFactionsUUID());
                 } else {
@@ -61,9 +66,10 @@ public enum HookHandler {
 
     /**
      * Load in a hook if the plugin is found.
+     *
      * @param hooks - Plugin hooks
      */
-    private void loadHook(RegionHook... hooks) {
+    private void loadHook(final RegionHook... hooks) {
         this.hooks.addAll(Arrays.asList(hooks));
     }
 }

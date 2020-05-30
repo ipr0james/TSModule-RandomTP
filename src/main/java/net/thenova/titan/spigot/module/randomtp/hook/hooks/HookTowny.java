@@ -23,7 +23,7 @@ import org.bukkit.entity.Player;
 public final class HookTowny implements RegionHook {
 
     @Override
-    public boolean check(Player player, Location location) {
+    public final boolean check(final Player player, final Location location) {
         return TownyUniverse.isWilderness(location.getBlock());
     }
 }
