@@ -1,4 +1,4 @@
-#Random TP - Version 1.0.0 Build 002
+# Random TP - Version 1.0.0 Build 002
 
 Commands:
 - RandomTP/RTP - Random TP around the world
